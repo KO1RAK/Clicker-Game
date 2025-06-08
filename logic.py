@@ -9,11 +9,13 @@ class GameLogic:
         self.eggs = 0
         self.autoclickers = 0
         self.autoclicker_cost = 10
+        self.click_power = 1
+        self.click_upgrade_cost = 15
         self.autoclicker_running = False
         self.load()
 
     def click(self):
-        self.eggs += 1
+        self.eggs += self.click_power
         self.save()
 
     def buy_autoclicker(self):
@@ -24,6 +26,15 @@ class GameLogic:
             self.save()
             if not self.autoclicker_running:
                 self.start_autoclicker()
+            return True
+        return False
+
+    def buy_click_upgrade(self):
+        if self.eggs >= self.click_upgrade_cost:
+            self.eggs -= self.click_upgrade_cost
+            self.click_power += 1
+            self.click_upgrade_cost = int(self.click_upgrade_cost * 2)
+            self.save()
             return True
         return False
 
@@ -44,7 +55,9 @@ class GameLogic:
                 json.dump({
                     'eggs': self.eggs,
                     'autoclickers': self.autoclickers,
-                    'autoclicker_cost': self.autoclicker_cost
+                    'autoclicker_cost': self.autoclicker_cost,
+                    'click_power': self.click_power,
+                    'click_upgrade_cost': self.click_upgrade_cost
                 }, f)
         except Exception as e:
             print(f"Error saving: {e}")
@@ -57,15 +70,21 @@ class GameLogic:
                     self.eggs = data.get('eggs', 0)
                     self.autoclickers = data.get('autoclickers', 0)
                     self.autoclicker_cost = data.get('autoclicker_cost', 10)
+                    self.click_power = data.get('click_power', 1)
+                    self.click_upgrade_cost = data.get('click_upgrade_cost', 15)
             except Exception as e:
                 print(f"Error loading: {e}")
                 self.eggs = 0
                 self.autoclickers = 0
                 self.autoclicker_cost = 10
+                self.click_power = 1
+                self.click_upgrade_cost = 15
         else:
             self.eggs = 0
             self.autoclickers = 0
             self.autoclicker_cost = 10
+            self.click_power = 1
+            self.click_upgrade_cost = 15
 
         if self.autoclickers > 0:
             self.start_autoclicker()

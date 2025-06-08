@@ -38,7 +38,6 @@ class ClickerGUI:
 
         self.shop_window = None
 
-        # Update UI every 0.5 seconds to reflect autoclicker changes
         self.update_ui_loop()
 
     def on_click(self):
@@ -53,6 +52,8 @@ class ClickerGUI:
         self.logic.eggs = 0
         self.logic.autoclickers = 0
         self.logic.autoclicker_cost = 10
+        self.logic.click_power = 1
+        self.logic.click_upgrade_cost = 15
         self.logic.save()
         self.update_score()
 
@@ -85,7 +86,23 @@ class ClickerGUI:
         self.buy_ac_button = tk.Button(self.shop_window, text="Buy Autoclicker",
                                        font=("Arial", 24), bg="#4CAF50", fg="#fff",
                                        command=self.buy_autoclicker)
-        self.buy_ac_button.pack(pady=30)
+        self.buy_ac_button.pack(pady=20)
+
+        # Click upgrade section
+        self.click_power_label = tk.Label(self.shop_window,
+                                          text=f"Click Power: {self.logic.click_power}",
+                                          font=("Arial", 28), fg="#fff", bg="#222")
+        self.click_power_label.pack(pady=20)
+
+        self.click_upgrade_cost_label = tk.Label(self.shop_window,
+                                                 text=f"Upgrade Cost: {self.logic.click_upgrade_cost} Eggs",
+                                                 font=("Arial", 24), fg="#ddd", bg="#222")
+        self.click_upgrade_cost_label.pack(pady=10)
+
+        self.buy_click_upgrade_button = tk.Button(self.shop_window, text="Buy Click Upgrade",
+                                                  font=("Arial", 24), bg="#2196F3", fg="#fff",
+                                                  command=self.buy_click_upgrade)
+        self.buy_click_upgrade_button.pack(pady=20)
 
     def buy_autoclicker(self):
         success = self.logic.buy_autoclicker()
@@ -93,19 +110,29 @@ class ClickerGUI:
             self.update_shop()
             self.update_score()
         else:
-            # Optionally, flash red or disable button briefly
             self.buy_ac_button.config(bg="#f44336")
             self.shop_window.after(300, lambda: self.buy_ac_button.config(bg="#4CAF50"))
+
+    def buy_click_upgrade(self):
+        success = self.logic.buy_click_upgrade()
+        if success:
+            self.update_shop()
+            self.update_score()
+        else:
+            self.buy_click_upgrade_button.config(bg="#f44336")
+            self.shop_window.after(300, lambda: self.buy_click_upgrade_button.config(bg="#2196F3"))
 
     def update_shop(self):
         self.ac_label.config(text=f"Autoclickers: {self.logic.autoclickers}")
         self.ac_cost_label.config(text=f"Cost: {self.logic.autoclicker_cost} Eggs")
+        self.click_power_label.config(text=f"Click Power: {self.logic.click_power}")
+        self.click_upgrade_cost_label.config(text=f"Upgrade Cost: {self.logic.click_upgrade_cost} Eggs")
 
     def update_ui_loop(self):
         self.update_score()
         if self.shop_window and tk.Toplevel.winfo_exists(self.shop_window):
             self.update_shop()
-        self.root.after(500, self.update_ui_loop)  # update every 0.5s
+        self.root.after(500, self.update_ui_loop)
 
 if __name__ == "__main__":
     root = tk.Tk()
