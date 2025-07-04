@@ -1,39 +1,74 @@
 import tkinter as tk
+import tkinter.font as tkfont
 from logic import GameLogic
+from shop import ShopWindow
 
 class ClickerGUI:
     def __init__(self, root):
         self.root = root
         self.logic = GameLogic()
 
-        self.root.title("Egg Clicker Deluxe")
-        self.root.geometry("1920x1080")
-        self.root.config(bg="#1e1e1e")
+        self.root.title("Egg Clicker Fun!")
+        self.root.geometry("800x600")
+        self.root.config(bg="#ffefd5")  # Warm pastel background
 
-        self.root.rowconfigure([0,1,2,3], weight=1)
-        self.root.columnconfigure(0, weight=1)
+        self.playful_font = ("Comic Sans MS", 36, "bold")
 
+        # Score label
         self.score_label = tk.Label(root, text=f"Eggs: {self.logic.eggs}",
-                                    font=("Comic Sans MS", 72, "bold"),
-                                    fg="#FFD700", bg="#1e1e1e")
-        self.score_label.grid(row=0, column=0, pady=(80, 20), sticky="n")
+                                    font=self.playful_font,
+                                    fg="#ff4500", bg="#ffefd5")
+        self.score_label.pack(pady=(20, 5))
 
-        self.click_button = tk.Button(root, text="Click", font=("Comic Sans MS", 96, "bold"),
-                                      fg="#ffffff", bg="#ffb300", activebackground="#ffaa00",
-                                      command=self.on_click, relief="raised", bd=8)
-        self.click_button.grid(row=1, column=0, pady=40, ipadx=60, ipady=30)
+        # Goal label
+        self.goal_target = 500
+        self.goal_label = tk.Label(root, text=f"Goal: {self.logic.eggs} / {self.goal_target} Eggs",
+                                   font=("Comic Sans MS", 24),
+                                   fg="#008000", bg="#ffefd5")
+        self.goal_label.pack(pady=(0, 20))
 
-        self.reset_button = tk.Button(root, text="Reset", font=("Arial", 28),
-                                      fg="#1e1e1e", bg="#dddddd",
+        # --- Tutorial checklist setup ---
+        self.tutorial_steps = [
+            {"text": "1. Click the big button", "done": False},
+            {"text": "2. Open the Shop", "done": False},
+            {"text": "3. Buy an Autoclicker", "done": False},
+            {"text": "4. Buy a Click Upgrade", "done": False},
+        ]
+        self.tutorial_frame = tk.Frame(root, bg="#fffacd", bd=2, relief="solid")
+        self.tutorial_frame.place(x=10, y=10, width=300, height=160)
+
+        self.tutorial_labels = []
+        for step in self.tutorial_steps:
+            lbl = tk.Label(self.tutorial_frame, text=step["text"],
+                           font=("Arial", 12), anchor="w", bg="#fffacd")
+            lbl.pack(fill="x", padx=5, pady=2)
+            self.tutorial_labels.append(lbl)
+
+        # Click button
+        self.click_button = tk.Button(root, text="🐣 Click Me! 🐣",
+                                      font=("Comic Sans MS", 28, "bold"),
+                                      fg="#ffffff", bg="#ff69b4",
+                                      activebackground="#ff1493",
+                                      relief="raised", bd=8,
+                                      command=self.on_click)
+        self.click_button.pack(pady=30, ipadx=30, ipady=20)
+
+        # Reset button
+        self.reset_button = tk.Button(root, text="Reset Game",
+                                      font=("Arial", 20),
+                                      fg="#333", bg="#ffe4e1",
                                       command=self.on_reset)
-        self.reset_button.grid(row=2, column=0, pady=20, ipadx=30, ipady=10)
+        self.reset_button.pack(pady=10, ipadx=20, ipady=10)
 
-        self.shop_button = tk.Button(root, text="Shop", font=("Arial", 28),
-                                     fg="#1e1e1e", bg="#a0d8f0",
+        # Shop button
+        self.shop_button = tk.Button(root, text="Open Shop 🛒",
+                                     font=("Arial", 24),
+                                     fg="#333", bg="#add8e6",
                                      command=self.open_shop)
-        self.shop_button.grid(row=3, column=0, pady=(0, 80), ipadx=30, ipady=10)
+        self.shop_button.pack(pady=20, ipadx=20, ipady=15)
 
-        self.flash_colors = ["#ffd700", "#ffaa00", "#ff6f00"]
+        # Colors for flash effect on click button
+        self.flash_colors = ["#ffb6c1", "#ff69b4", "#ff1493"]
         self.flash_index = 0
 
         self.shop_window = None
@@ -44,9 +79,42 @@ class ClickerGUI:
         self.logic.click()
         self.update_score()
         self.flash_button()
+        self.mark_step_done(0)  # Tutorial: clicked button
+
+    def open_shop(self):
+        self.mark_step_done(1)  # Tutorial: opened shop
+
+        if self.shop_window is not None and tk.Toplevel.winfo_exists(self.shop_window):
+            self.shop_window.lift()
+            return
+
+        self.shop_window = ShopWindow(self.root, self.logic, self.mark_step_done)
+
+    def mark_step_done(self, index):
+        if not self.tutorial_steps[index]["done"]:
+            self.tutorial_steps[index]["done"] = True
+            lbl = self.tutorial_labels[index]
+            font = tkfont.Font(font=lbl.cget("font"))
+            font.configure(overstrike=1)
+            lbl.config(font=font, fg="gray")
+            self.check_tutorial_complete()
+
+    def check_tutorial_complete(self):
+        if all(step["done"] for step in self.tutorial_steps):
+            self.tutorial_frame.destroy()
 
     def update_score(self):
-        self.score_label.config(text=f"Eggs: {self.logic.eggs}")
+        eggs = self.logic.eggs
+        self.score_label.config(text=f"Eggs: {eggs}")
+        self.goal_label.config(text=f"Goal: {eggs} / {self.goal_target} Eggs")
+        if eggs >= self.goal_target:
+            self.goal_label.config(fg="#ffd700")
+
+    def flash_button(self):
+        color = self.flash_colors[self.flash_index]
+        self.click_button.config(bg=color)
+        self.flash_index = (self.flash_index + 1) % len(self.flash_colors)
+        self.root.after(150, lambda: self.click_button.config(bg="#ff69b4"))
 
     def on_reset(self):
         self.logic.eggs = 0
@@ -57,82 +125,29 @@ class ClickerGUI:
         self.logic.save()
         self.update_score()
 
-    def flash_button(self):
-        color = self.flash_colors[self.flash_index]
-        self.click_button.config(bg=color)
-        self.flash_index = (self.flash_index + 1) % len(self.flash_colors)
-        self.root.after(150, lambda: self.click_button.config(bg="#ffb300"))
+        # Reset tutorial
+        for i, step in enumerate(self.tutorial_steps):
+            step["done"] = False
+            lbl = self.tutorial_labels[i]
+            font = tkfont.Font(font=lbl.cget("font"))
+            font.configure(overstrike=0)
+            lbl.config(font=font, fg="black")
 
-    def open_shop(self):
-        if self.shop_window is not None and tk.Toplevel.winfo_exists(self.shop_window):
-            self.shop_window.lift()
-            return
-
-        self.shop_window = tk.Toplevel(self.root)
-        self.shop_window.title("Shop")
-        self.shop_window.geometry("800x600")
-        self.shop_window.config(bg="#222")
-
-        # Autoclicker section
-        self.ac_label = tk.Label(self.shop_window, text=f"Autoclickers: {self.logic.autoclickers}",
-                                 font=("Arial", 28), fg="#fff", bg="#222")
-        self.ac_label.pack(pady=20)
-
-        self.ac_cost_label = tk.Label(self.shop_window,
-                                      text=f"Cost: {self.logic.autoclicker_cost} Eggs",
-                                      font=("Arial", 24), fg="#ddd", bg="#222")
-        self.ac_cost_label.pack(pady=10)
-
-        self.buy_ac_button = tk.Button(self.shop_window, text="Buy Autoclicker",
-                                       font=("Arial", 24), bg="#4CAF50", fg="#fff",
-                                       command=self.buy_autoclicker)
-        self.buy_ac_button.pack(pady=20)
-
-        # Click upgrade section
-        self.click_power_label = tk.Label(self.shop_window,
-                                          text=f"Click Power: {self.logic.click_power}",
-                                          font=("Arial", 28), fg="#fff", bg="#222")
-        self.click_power_label.pack(pady=20)
-
-        self.click_upgrade_cost_label = tk.Label(self.shop_window,
-                                                 text=f"Upgrade Cost: {self.logic.click_upgrade_cost} Eggs",
-                                                 font=("Arial", 24), fg="#ddd", bg="#222")
-        self.click_upgrade_cost_label.pack(pady=10)
-
-        self.buy_click_upgrade_button = tk.Button(self.shop_window, text="Buy Click Upgrade",
-                                                  font=("Arial", 24), bg="#2196F3", fg="#fff",
-                                                  command=self.buy_click_upgrade)
-        self.buy_click_upgrade_button.pack(pady=20)
-
-    def buy_autoclicker(self):
-        success = self.logic.buy_autoclicker()
-        if success:
-            self.update_shop()
-            self.update_score()
-        else:
-            self.buy_ac_button.config(bg="#f44336")
-            self.shop_window.after(300, lambda: self.buy_ac_button.config(bg="#4CAF50"))
-
-    def buy_click_upgrade(self):
-        success = self.logic.buy_click_upgrade()
-        if success:
-            self.update_shop()
-            self.update_score()
-        else:
-            self.buy_click_upgrade_button.config(bg="#f44336")
-            self.shop_window.after(300, lambda: self.buy_click_upgrade_button.config(bg="#2196F3"))
-
-    def update_shop(self):
-        self.ac_label.config(text=f"Autoclickers: {self.logic.autoclickers}")
-        self.ac_cost_label.config(text=f"Cost: {self.logic.autoclicker_cost} Eggs")
-        self.click_power_label.config(text=f"Click Power: {self.logic.click_power}")
-        self.click_upgrade_cost_label.config(text=f"Upgrade Cost: {self.logic.click_upgrade_cost} Eggs")
+        # Recreate tutorial box if missing
+        if not self.tutorial_frame.winfo_exists():
+            self.tutorial_frame = tk.Frame(self.root, bg="#fffacd", bd=2, relief="solid")
+            self.tutorial_frame.place(x=10, y=10, width=300, height=160)
+            self.tutorial_labels.clear()
+            for step in self.tutorial_steps:
+                lbl = tk.Label(self.tutorial_frame, text=step["text"],
+                               font=("Arial", 12), anchor="w", bg="#fffacd")
+                lbl.pack(fill="x", padx=5, pady=2)
+                self.tutorial_labels.append(lbl)
 
     def update_ui_loop(self):
         self.update_score()
-        if self.shop_window and tk.Toplevel.winfo_exists(self.shop_window):
-            self.update_shop()
         self.root.after(500, self.update_ui_loop)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
