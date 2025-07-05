@@ -15,23 +15,51 @@ class ClickerGUI:
         self.root.config(bg="#ffefd5")
         self.root.bind("<Escape>", self.exit_fullscreen)
 
-        # Menu button top-right using the separate MenuButton class
-        self.menu_btn = MenuButton(self.root, self.on_reset, self.on_exit)
-        self.menu_btn.place(relx=1.0, y=10, anchor="ne")
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Background canvas with pastel pink stripes
+        self.bg_canvas = tk.Canvas(self.root, width=screen_width, height=screen_height, highlightthickness=0)
+        self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
+
+        stripe_width = 40
+        stripe_color_1 = "#f4c2c2"
+        stripe_color_2 = "#f7d1d1"
+        for x in range(0, screen_width, stripe_width * 2):
+            self.bg_canvas.create_rectangle(x, 0, x + stripe_width, screen_height, fill=stripe_color_1, width=0)
+            self.bg_canvas.create_rectangle(x + stripe_width, 0, x + 2 * stripe_width, screen_height, fill=stripe_color_2, width=0)
+
+        # Draw clickable emoji centered horizontally and vertically
+        emoji_x = screen_width // 2
+        emoji_y = screen_height // 2
+        self.emoji_text = self.bg_canvas.create_text(
+            emoji_x, emoji_y,
+            text="🐣",
+            font=("Segoe UI Emoji", 200),
+            fill="black",
+            tags="clickable_emoji"
+        )
+
+        self.bg_canvas.tag_bind("clickable_emoji", "<Button-1>", self.on_click)
+        self.bg_canvas.tag_bind("clickable_emoji", "<Enter>", lambda e: self.bg_canvas.config(cursor="hand2"))
+        self.bg_canvas.tag_bind("clickable_emoji", "<Leave>", lambda e: self.bg_canvas.config(cursor=""))
 
         self.playful_font = ("Comic Sans MS", 36, "bold")
 
+        # Score label
         self.score_label = tk.Label(root, text=f"Eggs: {self.logic.eggs}",
                                     font=self.playful_font,
                                     fg="#ff4500", bg="#ffefd5")
         self.score_label.pack(pady=(40, 5))
 
+        # Goal label
         self.goal_target = 500
         self.goal_label = tk.Label(root, text=f"Goal: {self.logic.eggs} / {self.goal_target} Eggs",
                                    font=("Comic Sans MS", 24),
                                    fg="#008000", bg="#ffefd5")
         self.goal_label.pack(pady=(0, 20))
 
+        # Tutorial box
         tutorial_steps = [
             "1. Click the big button",
             "2. Open the Shop",
@@ -41,26 +69,23 @@ class ClickerGUI:
         self.tutorial_box = TutorialBox(root, tutorial_steps)
         self.tutorial_box.place(x=10, y=40, width=350, height=230)
 
-        self.click_button = tk.Button(root, text="🐣 Click Me! 🐣",
-                                      font=("Comic Sans MS", 28, "bold"),
-                                      fg="#ffffff", bg="#ff69b4",
-                                      activebackground="#ff1493",
-                                      relief="raised", bd=8,
-                                      command=self.on_click)
-        self.click_button.pack(pady=30, ipadx=30, ipady=20)
-
+        # Shop button
         self.shop_button = tk.Button(root, text="Open Shop 🛒",
                                      font=("Arial", 24),
                                      fg="#333", bg="#add8e6",
                                      command=self.open_shop)
         self.shop_button.pack(pady=20, ipadx=20, ipady=15)
 
-        self.flash_colors = ["#ffb6c1", "#ff69b4", "#ff1493"]
+        self.flash_colors = ["#f4c2c2", "#f7d1d1", "#f4c2c2"]
         self.flash_index = 0
 
         self.shop_window = None
 
-        # Add status bar at the bottom
+        # Menu button (top-right)
+        self.menu_btn = MenuButton(self.root, self.on_reset, self.on_exit)
+        self.menu_btn.place(relx=1.0, y=10, anchor="ne")
+
+        # Status bar
         self.status_bar = StatusBar(self.root, self.logic)
         self.status_bar.pack(side="bottom", fill="x")
 
@@ -72,10 +97,10 @@ class ClickerGUI:
     def on_exit(self):
         self.root.destroy()
 
-    def on_click(self):
+    def on_click(self, event=None):
         self.logic.click()
         self.update_score()
-        self.flash_button()
+        self.flash_emoji()
         self.tutorial_box.mark_step_done(0)
 
     def open_shop(self):
@@ -92,11 +117,9 @@ class ClickerGUI:
         if eggs >= self.goal_target:
             self.goal_label.config(fg="#ffd700")
 
-    def flash_button(self):
-        color = self.flash_colors[self.flash_index]
-        self.click_button.config(bg=color)
-        self.flash_index = (self.flash_index + 1) % len(self.flash_colors)
-        self.root.after(150, lambda: self.click_button.config(bg="#ff69b4"))
+    def flash_emoji(self):
+        self.bg_canvas.itemconfig(self.emoji_text, fill="#f7d1d1")
+        self.root.after(150, lambda: self.bg_canvas.itemconfig(self.emoji_text, fill="black"))
 
     def on_reset(self):
         self.logic.eggs = 0
@@ -121,6 +144,7 @@ class ClickerGUI:
         self.update_score()
         self.status_bar.update_status()
         self.root.after(500, self.update_ui_loop)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
