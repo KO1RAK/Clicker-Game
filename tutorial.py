@@ -9,7 +9,7 @@ class TutorialBox(tk.Frame):
         self.on_complete = on_complete
         self.config(bg="#fff176", bd=6, relief="ridge")
         self.pack_propagate(False)
-        self.tutorial_title = tk.Label(self, text="Tutorial To-Do",
+        self.tutorial_title = tk.Label(self, text="Tutorial",
                                        font=("Comic Sans MS", 18, "bold"),
                                        fg="#ff6f00", bg="#fff176")
         self.tutorial_title.pack(pady=(5, 10))

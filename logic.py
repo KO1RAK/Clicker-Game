@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import time
+from rebirth import Rebirth  # add this import
 
 class GameLogic:
     def __init__(self, save_file='savegame.json'):
@@ -12,10 +13,13 @@ class GameLogic:
         self.click_power = 1
         self.click_upgrade_cost = 15
         self.autoclicker_running = False
+        self.tutorial_completed = False
+        self.rebirth = Rebirth()  # add rebirth object
         self.load()
 
     def click(self):
-        self.eggs += self.click_power
+        # Multiply eggs gained by rebirth multiplier
+        self.eggs += self.click_power * self.rebirth.get_multiplier()
         self.save()
 
     def buy_autoclicker(self):
@@ -38,6 +42,32 @@ class GameLogic:
             return True
         return False
 
+    def rebirth_purchase(self):
+        if self.eggs >= 500:
+            # Reset progress
+            self.eggs = 0
+            self.autoclickers = 0
+            self.autoclicker_cost = 10
+            self.click_power = 1
+            self.click_upgrade_cost = 15
+            # Apply rebirth multiplier doubling and increment count
+            self.rebirth.apply_rebirth()
+            self.save()
+            if not self.autoclicker_running:
+                self.start_autoclicker()
+            return True
+        return False
+
+    def reset_all_progress(self):
+        self.eggs = 0
+        self.autoclickers = 0
+        self.autoclicker_cost = 10
+        self.click_power = 1
+        self.click_upgrade_cost = 15
+        self.tutorial_completed = False
+        self.rebirth = Rebirth()  # reset rebirth count & multiplier
+        self.save()
+
     def start_autoclicker(self):
         self.autoclicker_running = True
         thread = threading.Thread(target=self._autoclick_loop, daemon=True)
@@ -46,7 +76,8 @@ class GameLogic:
     def _autoclick_loop(self):
         while True:
             time.sleep(1)
-            self.eggs += self.autoclickers
+            # Autoclicker also multiplied by rebirth multiplier
+            self.eggs += self.autoclickers * self.rebirth.get_multiplier()
             self.save()
 
     def save(self):
@@ -57,7 +88,10 @@ class GameLogic:
                     'autoclickers': self.autoclickers,
                     'autoclicker_cost': self.autoclicker_cost,
                     'click_power': self.click_power,
-                    'click_upgrade_cost': self.click_upgrade_cost
+                    'click_upgrade_cost': self.click_upgrade_cost,
+                    'tutorial_completed': self.tutorial_completed,
+                    'rebirth_multiplier': self.rebirth.get_multiplier(),  # save multiplier
+                    'rebirth_count': self.rebirth.get_count()             # save count
                 }, f)
         except Exception as e:
             print(f"Error saving: {e}")
@@ -72,6 +106,10 @@ class GameLogic:
                     self.autoclicker_cost = data.get('autoclicker_cost', 10)
                     self.click_power = data.get('click_power', 1)
                     self.click_upgrade_cost = data.get('click_upgrade_cost', 15)
+                    self.tutorial_completed = data.get('tutorial_completed', False)
+                    multiplier = data.get('rebirth_multiplier', 1)
+                    count = data.get('rebirth_count', 0)
+                    self.rebirth = Rebirth(multiplier, count)
             except Exception as e:
                 print(f"Error loading: {e}")
                 self.eggs = 0
@@ -79,12 +117,16 @@ class GameLogic:
                 self.autoclicker_cost = 10
                 self.click_power = 1
                 self.click_upgrade_cost = 15
+                self.tutorial_completed = False
+                self.rebirth = Rebirth()
         else:
             self.eggs = 0
             self.autoclickers = 0
             self.autoclicker_cost = 10
             self.click_power = 1
             self.click_upgrade_cost = 15
+            self.tutorial_completed = False
+            self.rebirth = Rebirth()
 
         if self.autoclickers > 0:
             self.start_autoclicker()

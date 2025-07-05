@@ -23,8 +23,17 @@ class StatusBar(tk.Frame):
         self.click_power_label = tk.Label(self, text="🖱️ Click power: 1", **label_style)
         self.click_power_label.pack(side="left")
 
+        # New rebirth label
+        self.rebirth_label = tk.Label(self, text="🔄 Rebirths: 0 | Multiplier: x1", **label_style)
+        self.rebirth_label.pack(side="left")
+
     def update_status(self):
-        eggs_per_sec = self.logic.autoclickers  # or calculate properly if needed
+        eggs_per_sec = self.logic.autoclickers * self.logic.rebirth.get_multiplier()
         self.egg_per_sec_label.config(text=f"🥚 Eggs per second: {eggs_per_sec}")
         self.autoclicker_level_label.config(text=f"🤖 Auto-clickers: {self.logic.autoclickers}")
         self.click_power_label.config(text=f"🖱️ Click power: {self.logic.click_power}")
+
+        # Update rebirth info
+        rebirth_count = self.logic.rebirth.get_count() if hasattr(self.logic, 'rebirth') else 0
+        rebirth_mult = self.logic.rebirth.get_multiplier() if hasattr(self.logic, 'rebirth') else 1
+        self.rebirth_label.config(text=f"🔄 Rebirths: {rebirth_count} | Multiplier: x{rebirth_mult}")

@@ -85,6 +85,29 @@ class ShopWindow(tk.Toplevel):
                                                command=self.buy_click_upgrade)
         self.buy_click_upgrade_btn.pack(pady=10, ipadx=10, ipady=8)
 
+        # --- ADD REBIRTH WIDGETS BELOW ---
+
+        self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)  # Initial 500, doubles each rebirth
+
+        self.rebirth_label = tk.Label(self.main_frame, 
+                                      text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})",
+                                      font=("Comic Sans MS", 18), bg="#fff0f6", fg="#b3003b")
+        self.rebirth_label.pack(pady=(40, 5))
+
+        self.rebirth_cost_label = tk.Label(self.main_frame, 
+                                           text=f"Cost: {self.rebirth_cost} eggs",
+                                           font=("Comic Sans MS", 16), bg="#fff0f6", fg="#80002b")
+        self.rebirth_cost_label.pack(pady=(0, 10))
+
+        self.buy_rebirth_btn = tk.Button(self.main_frame, text="Buy Rebirth",
+                                         font=("Comic Sans MS", 18, "bold"),
+                                         bg="#ff4d6d", fg="white",
+                                         activebackground="#ff1a3c",
+                                         activeforeground="white",
+                                         relief="flat", bd=0,
+                                         command=self.buy_rebirth)
+        self.buy_rebirth_btn.pack(pady=10, ipadx=10, ipady=8)
+
     def buy_autoclicker(self):
         if self.logic.eggs >= self.logic.autoclicker_cost:
             self.logic.eggs -= self.logic.autoclicker_cost
@@ -103,11 +126,30 @@ class ShopWindow(tk.Toplevel):
             self.update_shop_ui()
             self.tutorial_mark_done(3)
 
+    # --- ADD REBIRTH BUY METHOD ---
+
+    def buy_rebirth(self):
+        cost = 500 * (2 ** self.logic.rebirth.count)
+        if self.logic.eggs >= cost:
+            if self.logic.rebirth_purchase():
+                self.logic.save()
+                self.update_shop_ui()
+                self.tutorial_mark_done(4)  # optional: mark rebirth tutorial step if you want
+                # Update rebirth cost for next time
+                self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)
+                self.rebirth_cost_label.config(text=f"Cost: {self.rebirth_cost} eggs")
+                self.rebirth_label.config(text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})")
+
     def update_shop_ui(self):
         self.autoclicker_label.config(text=f"Autoclickers: {self.logic.autoclickers}")
         self.autoclicker_cost_label.config(text=f"Cost: {self.logic.autoclicker_cost} eggs")
         self.click_power_label.config(text=f"Click Power: {self.logic.click_power}")
         self.click_upgrade_cost_label.config(text=f"Cost: {self.logic.click_upgrade_cost} eggs")
+
+        # Update rebirth UI as well
+        self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)
+        self.rebirth_cost_label.config(text=f"Cost: {self.rebirth_cost} eggs")
+        self.rebirth_label.config(text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})")
 
     def on_close(self):
         self.parent.shop_window = None
