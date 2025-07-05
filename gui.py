@@ -2,7 +2,7 @@ import tkinter as tk
 from logic import GameLogic
 from shop import ShopWindow
 from tutorial import TutorialBox
-from menu_bar import MenuButton  # Import the separate menu script
+from menu_bar import MenuButton
 
 class ClickerGUI:
     def __init__(self, root):
@@ -14,7 +14,6 @@ class ClickerGUI:
         self.root.config(bg="#ffefd5")
         self.root.bind("<Escape>", self.exit_fullscreen)
 
-        # Menu button top-right using the separate MenuButton class
         self.menu_btn = MenuButton(self.root, self.on_reset, self.on_exit)
         self.menu_btn.place(relx=1.0, y=10, anchor="ne")
 
@@ -47,12 +46,6 @@ class ClickerGUI:
                                       relief="raised", bd=8,
                                       command=self.on_click)
         self.click_button.pack(pady=30, ipadx=30, ipady=20)
-
-        self.reset_button = tk.Button(root, text="Reset Game",
-                                      font=("Arial", 20),
-                                      fg="#333", bg="#ffe4e1",
-                                      command=self.on_reset)
-        self.reset_button.pack(pady=10, ipadx=20, ipady=10)
 
         self.shop_button = tk.Button(root, text="Open Shop 🛒",
                                      font=("Arial", 24),
