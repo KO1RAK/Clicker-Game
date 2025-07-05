@@ -7,9 +7,20 @@ class ShopWindow(tk.Toplevel):
         self.logic = logic
         self.tutorial_callback = tutorial_callback  # Function to notify tutorial steps done
 
-        self.title("Shop")
         self.geometry("600x400")
         self.config(bg="#ffddee")
+        self.overrideredirect(True)  # Remove OS window border
+
+        # Custom close button
+        close_btn = tk.Button(self, text="✕", font=("Arial", 12, "bold"),
+                              fg="white", bg="red", bd=0,
+                              command=self.destroy)
+        close_btn.place(x=570, y=5, width=25, height=25)
+
+        # Enable dragging window by mouse
+        self.bind("<ButtonPress-1>", self.start_move)
+        self.bind("<ButtonRelease-1>", self.stop_move)
+        self.bind("<B1-Motion>", self.do_move)
 
         label = tk.Label(self, text="Buy Upgrades", font=("Comic Sans MS", 24), bg="#ffddee")
         label.pack(pady=10)
@@ -24,7 +35,6 @@ class ShopWindow(tk.Toplevel):
                                                command=self.buy_click_upgrade)
         self.buy_click_upgrade_btn.pack(pady=15, ipadx=20, ipady=10)
 
-        # Update button text periodically in case costs change
         self.update_buttons()
 
     def buy_autoclicker(self):
@@ -40,5 +50,18 @@ class ShopWindow(tk.Toplevel):
     def update_buttons(self):
         self.buy_auto_btn.config(text=f"Buy Autoclicker ({self.logic.autoclicker_cost} eggs)")
         self.buy_click_upgrade_btn.config(text=f"Buy Click Upgrade ({self.logic.click_upgrade_cost} eggs)")
-        # Call again every 1 second to refresh prices if needed
         self.after(1000, self.update_buttons)
+
+    # Dragging support
+    def start_move(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def stop_move(self, event):
+        self.x = None
+        self.y = None
+
+    def do_move(self, event):
+        x = event.x_root - self.x
+        y = event.y_root - self.y
+        self.geometry(f"+{x}+{y}")
