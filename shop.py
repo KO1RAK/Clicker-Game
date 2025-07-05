@@ -10,7 +10,6 @@ class ShopWindow(tk.Toplevel):
         self.overrideredirect(True)
         self.attributes("-topmost", True)
 
-        # Position on right side docked to parent window
         parent.update_idletasks()
         px, py = parent.winfo_x(), parent.winfo_y()
         pw, ph = parent.winfo_width(), parent.winfo_height()
@@ -22,18 +21,15 @@ class ShopWindow(tk.Toplevel):
 
         self.geometry(f"{width}x{height}+{x}+{y}")
 
-        # Outer frame acting as the border
         border_color = "#d6336c"  # deep pink/red border
         border_width = 8
 
         self.border_frame = tk.Frame(self, bg=border_color)
         self.border_frame.pack(fill="both", expand=True)
 
-        # Inner frame for content, with padding and lighter bg
         self.main_frame = tk.Frame(self.border_frame, bg="#fff0f6", padx=20, pady=20)
         self.main_frame.pack(fill="both", expand=True, padx=border_width, pady=border_width)
 
-        # Close button styled with hover effect
         self.close_btn = tk.Button(self.main_frame, text="✕", font=("Arial", 14, "bold"),
                                    bg="#ff4d6d", fg="white", bd=0, relief="flat",
                                    activebackground="#ff1a3c", activeforeground="white",
@@ -85,9 +81,8 @@ class ShopWindow(tk.Toplevel):
                                                command=self.buy_click_upgrade)
         self.buy_click_upgrade_btn.pack(pady=10, ipadx=10, ipady=8)
 
-        # --- ADD REBIRTH WIDGETS BELOW ---
 
-        self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)  # Initial 500, doubles each rebirth
+        self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)
 
         self.rebirth_label = tk.Label(self.main_frame, 
                                       text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})",
@@ -126,7 +121,6 @@ class ShopWindow(tk.Toplevel):
             self.update_shop_ui()
             self.tutorial_mark_done(3)
 
-    # --- ADD REBIRTH BUY METHOD ---
 
     def buy_rebirth(self):
         cost = 500 * (2 ** self.logic.rebirth.count)
@@ -134,8 +128,7 @@ class ShopWindow(tk.Toplevel):
             if self.logic.rebirth_purchase():
                 self.logic.save()
                 self.update_shop_ui()
-                self.tutorial_mark_done(4)  # optional: mark rebirth tutorial step if you want
-                # Update rebirth cost for next time
+                self.tutorial_mark_done(4) 
                 self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)
                 self.rebirth_cost_label.config(text=f"Cost: {self.rebirth_cost} eggs")
                 self.rebirth_label.config(text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})")
@@ -146,7 +139,6 @@ class ShopWindow(tk.Toplevel):
         self.click_power_label.config(text=f"Click Power: {self.logic.click_power}")
         self.click_upgrade_cost_label.config(text=f"Cost: {self.logic.click_upgrade_cost} eggs")
 
-        # Update rebirth UI as well
         self.rebirth_cost = 500 * (2 ** self.logic.rebirth.count)
         self.rebirth_cost_label.config(text=f"Cost: {self.rebirth_cost} eggs")
         self.rebirth_label.config(text=f"Rebirths: {self.logic.rebirth.count} (Multiplier: x{self.logic.rebirth.get_multiplier()})")

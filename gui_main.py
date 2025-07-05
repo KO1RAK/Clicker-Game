@@ -30,11 +30,11 @@ class ClickerGUI:
 
         if not self.logic.tutorial_completed:
             tutorial_steps = [
-                "Click the big button",
+                "Click the Chicken in the egg",
                 "Open the Shop",
                 "Buy an Autoclicker",
                 "Buy a Click Upgrade",
-                "Buy a Rebirth",  # Added rebirth step without numbers
+                "Buy a Rebirth", 
             ]
             self.tutorial_box = TutorialBox(self.root, tutorial_steps, on_complete=self.tutorial_finished)
             self.tutorial_box.place(x=10, y=40, width=350, height=280)
@@ -93,10 +93,10 @@ class ClickerGUI:
     def buy_rebirth(self):
         if self.logic.rebirth_purchase():
             if self.tutorial_box:
-                self.tutorial_box.mark_step_done(4)  # index 4 = rebirth step
+                self.tutorial_box.mark_step_done(4) 
             self.update_score()
         else:
-            # Optional: handle failed rebirth feedback here
+            
             pass
 
     def on_reset(self):

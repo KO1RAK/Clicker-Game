@@ -2,7 +2,7 @@ import json
 import os
 import threading
 import time
-from rebirth import Rebirth  # add this import
+from rebirth import Rebirth
 
 class GameLogic:
     def __init__(self, save_file='savegame.json'):
@@ -14,11 +14,10 @@ class GameLogic:
         self.click_upgrade_cost = 15
         self.autoclicker_running = False
         self.tutorial_completed = False
-        self.rebirth = Rebirth()  # add rebirth object
+        self.rebirth = Rebirth() 
         self.load()
 
     def click(self):
-        # Multiply eggs gained by rebirth multiplier
         self.eggs += self.click_power * self.rebirth.get_multiplier()
         self.save()
 
@@ -44,17 +43,14 @@ class GameLogic:
 
     def rebirth_purchase(self):
         if self.eggs >= 500:
-            # Reset progress
             self.eggs = 0
             self.autoclickers = 0
             self.autoclicker_cost = 10
             self.click_power = 1
             self.click_upgrade_cost = 15
-            # Apply rebirth multiplier doubling and increment count
             self.rebirth.apply_rebirth()
             self.save()
-            if not self.autoclicker_running:
-                self.start_autoclicker()
+            self.start_autoclicker()
             return True
         return False
 
@@ -65,18 +61,18 @@ class GameLogic:
         self.click_power = 1
         self.click_upgrade_cost = 15
         self.tutorial_completed = False
-        self.rebirth = Rebirth()  # reset rebirth count & multiplier
+        self.rebirth = Rebirth() 
         self.save()
 
     def start_autoclicker(self):
-        self.autoclicker_running = True
-        thread = threading.Thread(target=self._autoclick_loop, daemon=True)
-        thread.start()
+        if not self.autoclicker_running and self.autoclickers > 0:
+            self.autoclicker_running = True
+            thread = threading.Thread(target=self._autoclick_loop, daemon=True)
+            thread.start()
 
     def _autoclick_loop(self):
         while True:
             time.sleep(1)
-            # Autoclicker also multiplied by rebirth multiplier
             self.eggs += self.autoclickers * self.rebirth.get_multiplier()
             self.save()
 
@@ -109,7 +105,7 @@ class GameLogic:
                     self.tutorial_completed = data.get('tutorial_completed', False)
                     multiplier = data.get('rebirth_multiplier', 1)
                     count = data.get('rebirth_count', 0)
-                    self.rebirth = Rebirth(multiplier, count)
+                    self.rebirth = Rebirth(count,multiplier)
             except Exception as e:
                 print(f"Error loading: {e}")
                 self.eggs = 0
@@ -128,5 +124,6 @@ class GameLogic:
             self.tutorial_completed = False
             self.rebirth = Rebirth()
 
+        self.autoclicker_running = False  # Reset running state after load
         if self.autoclickers > 0:
             self.start_autoclicker()
