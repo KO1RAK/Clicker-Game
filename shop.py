@@ -1,67 +1,114 @@
 import tkinter as tk
-import tkinter.font as tkfont
 
 class ShopWindow(tk.Toplevel):
-    def __init__(self, parent, logic, tutorial_callback):
+    def __init__(self, parent, logic, tutorial_mark_done_callback):
         super().__init__(parent)
+        self.parent = parent
         self.logic = logic
-        self.tutorial_callback = tutorial_callback  # Function to notify tutorial steps done
+        self.tutorial_mark_done = tutorial_mark_done_callback
 
-        self.geometry("600x400")
-        self.config(bg="#ffddee")
-        self.overrideredirect(True)  # Remove OS window border
+        self.overrideredirect(True)
+        self.attributes("-topmost", True)
 
-        # Custom close button
-        close_btn = tk.Button(self, text="✕", font=("Arial", 12, "bold"),
-                              fg="white", bg="red", bd=0,
-                              command=self.destroy)
-        close_btn.place(x=570, y=5, width=25, height=25)
+        # Position on right side docked to parent window
+        parent.update_idletasks()
+        px, py = parent.winfo_x(), parent.winfo_y()
+        pw, ph = parent.winfo_width(), parent.winfo_height()
 
-        # Enable dragging window by mouse
-        self.bind("<ButtonPress-1>", self.start_move)
-        self.bind("<ButtonRelease-1>", self.stop_move)
-        self.bind("<B1-Motion>", self.do_move)
+        width = 420
+        height = ph
+        x = px + pw - width
+        y = py
 
-        label = tk.Label(self, text="Buy Upgrades", font=("Comic Sans MS", 24), bg="#ffddee")
-        label.pack(pady=10)
+        self.geometry(f"{width}x{height}+{x}+{y}")
 
-        self.buy_auto_btn = tk.Button(self, text=f"Buy Autoclicker ({self.logic.autoclicker_cost} eggs)",
-                                     font=("Arial", 16), bg="#ffe4e1",
-                                     command=self.buy_autoclicker)
-        self.buy_auto_btn.pack(pady=15, ipadx=20, ipady=10)
+        # Outer frame acting as the border
+        border_color = "#d6336c"  # deep pink/red border
+        border_width = 8
 
-        self.buy_click_upgrade_btn = tk.Button(self, text=f"Buy Click Upgrade ({self.logic.click_upgrade_cost} eggs)",
-                                               font=("Arial", 16), bg="#ffe4e1",
+        self.border_frame = tk.Frame(self, bg=border_color)
+        self.border_frame.pack(fill="both", expand=True)
+
+        # Inner frame for content, with padding and lighter bg
+        self.main_frame = tk.Frame(self.border_frame, bg="#fff0f6", padx=20, pady=20)
+        self.main_frame.pack(fill="both", expand=True, padx=border_width, pady=border_width)
+
+        # Close button styled with hover effect
+        self.close_btn = tk.Button(self.main_frame, text="✕", font=("Arial", 14, "bold"),
+                                   bg="#ff4d6d", fg="white", bd=0, relief="flat",
+                                   activebackground="#ff1a3c", activeforeground="white",
+                                   command=self.on_close)
+        self.close_btn.place(relx=1, x=-10, y=10, anchor="ne")
+        self.close_btn.bind("<Enter>", lambda e: self.close_btn.config(bg="#ff1a3c"))
+        self.close_btn.bind("<Leave>", lambda e: self.close_btn.config(bg="#ff4d6d"))
+
+        self.create_widgets()
+
+        self.resizable(False, False)
+
+    def create_widgets(self):
+        title = tk.Label(self.main_frame, text="Shop", font=("Comic Sans MS", 28, "bold"),
+                         bg="#fff0f6", fg="#d6336c")
+        title.pack(pady=(30, 20))
+
+        self.autoclicker_label = tk.Label(self.main_frame, text=f"Autoclickers: {self.logic.autoclickers}",
+                                          font=("Comic Sans MS", 18), bg="#fff0f6", fg="#b3003b")
+        self.autoclicker_label.pack(pady=(10, 5))
+
+        self.autoclicker_cost_label = tk.Label(self.main_frame, text=f"Cost: {self.logic.autoclicker_cost} eggs",
+                                               font=("Comic Sans MS", 16), bg="#fff0f6", fg="#80002b")
+        self.autoclicker_cost_label.pack(pady=(0, 10))
+
+        self.buy_autoclicker_btn = tk.Button(self.main_frame, text="Buy Autoclicker",
+                                             font=("Comic Sans MS", 18, "bold"),
+                                             bg="#ff4d6d", fg="white",
+                                             activebackground="#ff1a3c",
+                                             activeforeground="white",
+                                             relief="flat", bd=0,
+                                             command=self.buy_autoclicker)
+        self.buy_autoclicker_btn.pack(pady=10, ipadx=10, ipady=8)
+
+        self.click_power_label = tk.Label(self.main_frame, text=f"Click Power: {self.logic.click_power}",
+                                          font=("Comic Sans MS", 18), bg="#fff0f6", fg="#b3003b")
+        self.click_power_label.pack(pady=(40, 5))
+
+        self.click_upgrade_cost_label = tk.Label(self.main_frame, text=f"Cost: {self.logic.click_upgrade_cost} eggs",
+                                                 font=("Comic Sans MS", 16), bg="#fff0f6", fg="#80002b")
+        self.click_upgrade_cost_label.pack(pady=(0, 10))
+
+        self.buy_click_upgrade_btn = tk.Button(self.main_frame, text="Buy Click Upgrade",
+                                               font=("Comic Sans MS", 18, "bold"),
+                                               bg="#ff4d6d", fg="white",
+                                               activebackground="#ff1a3c",
+                                               activeforeground="white",
+                                               relief="flat", bd=0,
                                                command=self.buy_click_upgrade)
-        self.buy_click_upgrade_btn.pack(pady=15, ipadx=20, ipady=10)
-
-        self.update_buttons()
+        self.buy_click_upgrade_btn.pack(pady=10, ipadx=10, ipady=8)
 
     def buy_autoclicker(self):
-        if hasattr(self.logic, "buy_autoclicker") and self.logic.buy_autoclicker():
-            self.tutorial_callback(2)  # Mark tutorial step 3 done
-            self.update_buttons()
+        if self.logic.eggs >= self.logic.autoclicker_cost:
+            self.logic.eggs -= self.logic.autoclicker_cost
+            self.logic.autoclickers += 1
+            self.logic.autoclicker_cost = int(round(self.logic.autoclicker_cost * 1.25))
+            self.logic.save()
+            self.update_shop_ui()
+            self.tutorial_mark_done(2)
 
     def buy_click_upgrade(self):
-        if hasattr(self.logic, "buy_click_upgrade") and self.logic.buy_click_upgrade():
-            self.tutorial_callback(3)  # Mark tutorial step 4 done
-            self.update_buttons()
+        if self.logic.eggs >= self.logic.click_upgrade_cost:
+            self.logic.eggs -= self.logic.click_upgrade_cost
+            self.logic.click_power += 1
+            self.logic.click_upgrade_cost = int(round(self.logic.click_upgrade_cost * 1.25))
+            self.logic.save()
+            self.update_shop_ui()
+            self.tutorial_mark_done(3)
 
-    def update_buttons(self):
-        self.buy_auto_btn.config(text=f"Buy Autoclicker ({self.logic.autoclicker_cost} eggs)")
-        self.buy_click_upgrade_btn.config(text=f"Buy Click Upgrade ({self.logic.click_upgrade_cost} eggs)")
-        self.after(1000, self.update_buttons)
+    def update_shop_ui(self):
+        self.autoclicker_label.config(text=f"Autoclickers: {self.logic.autoclickers}")
+        self.autoclicker_cost_label.config(text=f"Cost: {self.logic.autoclicker_cost} eggs")
+        self.click_power_label.config(text=f"Click Power: {self.logic.click_power}")
+        self.click_upgrade_cost_label.config(text=f"Cost: {self.logic.click_upgrade_cost} eggs")
 
-    # Dragging support
-    def start_move(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def stop_move(self, event):
-        self.x = None
-        self.y = None
-
-    def do_move(self, event):
-        x = event.x_root - self.x
-        y = event.y_root - self.y
-        self.geometry(f"+{x}+{y}")
+    def on_close(self):
+        self.parent.shop_window = None
+        self.destroy()

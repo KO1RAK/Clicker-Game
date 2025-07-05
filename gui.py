@@ -3,6 +3,7 @@ from logic import GameLogic
 from shop import ShopWindow
 from tutorial import TutorialBox
 from menu_bar import MenuButton
+from status_bar import StatusBar
 
 class ClickerGUI:
     def __init__(self, root):
@@ -14,6 +15,7 @@ class ClickerGUI:
         self.root.config(bg="#ffefd5")
         self.root.bind("<Escape>", self.exit_fullscreen)
 
+        # Menu button top-right using the separate MenuButton class
         self.menu_btn = MenuButton(self.root, self.on_reset, self.on_exit)
         self.menu_btn.place(relx=1.0, y=10, anchor="ne")
 
@@ -57,6 +59,10 @@ class ClickerGUI:
         self.flash_index = 0
 
         self.shop_window = None
+
+        # Add status bar at the bottom
+        self.status_bar = StatusBar(self.root, self.logic)
+        self.status_bar.pack(side="bottom", fill="x")
 
         self.update_ui_loop()
 
@@ -113,8 +119,8 @@ class ClickerGUI:
 
     def update_ui_loop(self):
         self.update_score()
+        self.status_bar.update_status()
         self.root.after(500, self.update_ui_loop)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
